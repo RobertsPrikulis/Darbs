@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budžeta Plānotājs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0f0f13;
+      --surface:  #18181f;
+      --border:   #2a2a35;
+      --text:     #e8e8f0;
+      --muted:    #666680;
+      --green:    #00e5a0;
+      --red:      #ff4d6d;
+      --yellow:   #ffd166;
+      --accent:   #7c6bff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: rgba(15,15,19,.92);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .nav-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -.02em; }
+    .nav-logo span { color: var(--accent); }
+    .nav-link {
+      font-family: 'DM Mono', monospace;
+      font-size: .8rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: .4rem .9rem;
+      border-radius: 6px;
+      transition: all .2s;
+    }
+    .nav-link:hover { color: var(--text); border-color: var(--accent); }
+
+    /* ── MAIN ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    /* ── FLASH ── */
+    .flash {
+      font-family: 'DM Mono', monospace;
+      font-size: .82rem;
+      padding: .8rem 1.2rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border-left: 3px solid;
+    }
+    .flash.veiksme  { background: #00e5a015; border-color: var(--green); color: var(--green); }
+    .flash.kļūda    { background: #ff4d6d15; border-color: var(--red);   color: var(--red);   }
+    .flash.info     { background: #7c6bff15; border-color: var(--accent);color: var(--accent);}
+
+    /* ── STATS ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.3rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card.ienakumi::before { background: var(--green); }
+    .stat-card.izdevumi::before { background: var(--red); }
+    .stat-card.bilance::before  { background: var(--accent); }
+
+    .stat-label {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: .5rem;
+    }
+    .stat-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+    .stat-card.ienakumi .stat-value { color: var(--green); }
+    .stat-card.izdevumi .stat-value { color: var(--red); }
+    .stat-card.bilance  .stat-value { color: var(--accent); }
+
+    /* ── FORM ── */
+    .form-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.8rem;
+      margin-bottom: 2rem;
+    }
+    .form-panel h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 160px auto;
+      gap: .75rem;
+      align-items: end;
+    }
+    .field label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      margin-bottom: .4rem;
+      letter-spacing: .05em;
+    }
+    .field select,
+    .field input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: .92rem;
+      padding: .65rem .9rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .field select:focus,
+    .field input:focus { border-color: var(--accent); }
+
+    .btn-pievienot {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: .9rem;
+      padding: .65rem 1.4rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      white-space: nowrap;
+    }
+    .btn-pievienot:hover  { opacity: .85; }
+    .btn-pievienot:active { transform: scale(.97); }
+
+    /* ── FILTER ── */
+    .filter-bar {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .filter-bar span {
+      font-family: 'DM Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      margin-right: .3rem;
+    }
+    .filter-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: .75rem;
+      padding: .35rem .85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all .2s;
+    }
+    .filter-btn:hover,
+    .filter-btn.aktīvs {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--bg); }
+    th {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      padding: .9rem 1.2rem;
+      text-align: left;
+    }
+    td {
+      padding: .85rem 1.2rem;
+      font-size: .9rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: rgba(124,107,255,.04); }
+
+    .badge {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: .68rem;
+      padding: .25rem .65rem;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge.ienakums { background: #00e5a020; color: var(--green); }
+    .badge.izdevums { background: #ff4d6d20; color: var(--red); }
+
+    .summa-pos { color: var(--green); font-weight: 600; font-family: 'DM Mono', monospace; }
+    .summa-neg { color: var(--red);   font-weight: 600; font-family: 'DM Mono', monospace; }
+
+    .btn-dzest {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: .3rem .65rem;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-dzest:hover { border-color: var(--red); color: var(--red); }
+
+    .datums-cell { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      font-size: .85rem;
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: .8rem; }
+
+    @media (max-width: 650px) {
+      .stats { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .form-row .field:nth-child(2) { grid-column: span 2; }
+      .form-row .btn-pievienot { grid-column: span 2; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">💰 Budžeta <span>Plānotājs</span></div>
+  <a href="/bilance" class="nav-link">→ Bilances pārskats</a>
+</nav>
+
+<div class="container">
+
+  <!-- Flash paziņojumi -->
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for kat, teksts in msgs %}
+      <div class="flash {{ kat }}">{{ teksts }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Statistika -->
+  <div class="stats">
+    <div class="stat-card ienakumi">
+      <div class="stat-label">Ienākumi</div>
+      <div class="stat-value">+{{ "%.2f"|format(ienakumi) }} €</div>
+    </div>
+    <div class="stat-card izdevumi">
+      <div class="stat-label">Izdevumi</div>
+      <div class="stat-value">-{{ "%.2f"|format(izdevumi) }} €</div>
+    </div>
+    <div class="stat-card bilance">
+      <div class="stat-label">Bilance</div>
+      <div class="stat-value">{{ "%.2f"|format(bilance) }} €</div>
+    </div>
+  </div>
+
+  <!-- Pievienošanas forma -->
+  <div class="form-panel">
+    <h2>✦ Jauns ieraksts</h2>
+    <form action="/pievienot" method="POST">
+      <div class="form-row">
+        <div class="field">
+          <label>Tips</label>
+          <select name="tips" required>
+            <option value="ienakums">📈 Ienākums</option>
+            <option value="izdevums">📉 Izdevums</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Apraksts</label>
+          <input type="text" name="apraksts" placeholder="piemēram: alga, pārtika..." required>
+        </div>
+        <div class="field">
+          <label>Summa (€)</label>
+          <input type="number" name="summa" step="0.01" min="0.01" placeholder="0.00" required>
+        </div>
+        <button type="submit" class="btn-pievienot">+ Pievienot</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Filtrēšana -->
+  <div class="filter-bar">
+    <span>Rādīt:</span>
+    <a href="/?filtrs=visi"      class="filter-btn {% if filtrs == 'visi' %}aktīvs{% endif %}">Visi</a>
+    <a href="/?filtrs=ienakums"  class="filter-btn {% if filtrs == 'ienakums' %}aktīvs{% endif %}">Ienākumi</a>
+    <a href="/?filtrs=izdevums"  class="filter-btn {% if filtrs == 'izdevums' %}aktīvs{% endif %}">Izdevumi</a>
+  </div>
+
+  <!-- Ierakstu tabula -->
+  <div class="table-wrap">
+    {% if dati %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Tips</th>
+          <th>Apraksts</th>
+          <th>Summa</th>
+          <th>Datums</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ier in dati %}
+        <tr>
+          <td class="datums-cell">{{ ier.id }}</td>
+          <td><span class="badge {{ ier.tips }}">{{ ier.tips }}</span></td>
+          <td>{{ ier.apraksts }}</td>
+          <td>
+            {% if ier.tips == 'ienakums' %}
+              <span class="summa-pos">+{{ "%.2f"|format(ier.summa) }} €</span>
+            {% else %}
+              <span class="summa-neg">−{{ "%.2f"|format(ier.summa) }} €</span>
+            {% endif %}
+          </td>
+          <td class="datums-cell">{{ ier.datums }}</td>
+          <td>
+            <form action="/dzest/{{ ier.id }}" method="GET"
+                  onsubmit="return confirm('Dzēst šo ierakstu?')">
+              <button type="submit" class="btn-dzest">✕</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">📭</div>
+      Nav ierakstu. Pievieno pirmo!
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>

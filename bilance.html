@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bilances Pārskats</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f13; --surface: #18181f; --border: #2a2a35;
+      --text: #e8e8f0; --muted: #666680;
+      --green: #00e5a0; --red: #ff4d6d; --accent: #7c6bff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 2rem; border-bottom: 1px solid var(--border);
+      background: rgba(15,15,19,.92); backdrop-filter: blur(12px);
+    }
+    .nav-logo { font-size: 1.2rem; font-weight: 800; }
+    .nav-logo span { color: var(--accent); }
+    .nav-link {
+      font-family: 'DM Mono', monospace; font-size: .8rem; color: var(--muted);
+      text-decoration: none; border: 1px solid var(--border); padding: .4rem .9rem;
+      border-radius: 6px; transition: all .2s;
+    }
+    .nav-link:hover { color: var(--text); border-color: var(--accent); }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: .4rem; }
+    .subtitle { font-family: 'DM Mono', monospace; font-size: .8rem; color: var(--muted); margin-bottom: 2.5rem; }
+
+    .bilance-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 2.5rem; margin-bottom: 2rem; text-align: center;
+    }
+    .bilance-label { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: .8rem; }
+    .bilance-summa { font-size: 3.5rem; font-weight: 800; letter-spacing: -.04em; }
+    .bilance-summa.pozitiva { color: var(--green); }
+    .bilance-summa.negatīva { color: var(--red); }
+
+    .divi-staabi { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .info-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.5rem; position: relative; overflow: hidden;
+    }
+    .info-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .info-card.i::before { background: var(--green); }
+    .info-card.iz::before { background: var(--red); }
+    .info-label { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .5rem; }
+    .info-value { font-size: 1.6rem; font-weight: 800; }
+    .info-card.i .info-value { color: var(--green); }
+    .info-card.iz .info-value { color: var(--red); }
+
+    /* Progress bar */
+    .progress-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .progress-title { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem; }
+    .progress-bar-bg { background: var(--bg); border-radius: 99px; height: 12px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green), var(--accent)); transition: width .6s ease; }
+    .progress-info { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: .72rem; color: var(--muted); margin-top: .5rem; }
+
+    /* Top izdevumi */
+    .top-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .top-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+    .top-row { display: flex; justify-content: space-between; align-items: center; padding: .9rem 1.5rem; border-top: 1px solid var(--border); }
+    .top-row:first-of-type { border-top: none; }
+    .top-apraksts { font-size: .92rem; }
+    .top-summa { font-family: 'DM Mono', monospace; font-size: .9rem; color: var(--red); font-weight: 600; }
+    .empty { padding: 2rem; text-align: center; font-family: 'DM Mono', monospace; font-size: .85rem; color: var(--muted); }
+
+    .stat-meta { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); text-align: center; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">💰 Budžeta <span>Plānotājs</span></div>
+  <a href="/" class="nav-link">← Atpakaļ</a>
+</nav>
+
+<div class="container">
+  <h1>Bilances pārskats</h1>
+  <p class="subtitle">// Kopā ieraksti: {{ kopskaits }}</p>
+
+  <!-- Galvenā bilance -->
+  <div class="bilance-card">
+    <div class="bilance-label">Pašreizējā bilance</div>
+    <div class="bilance-summa {% if bilance >= 0 %}pozitiva{% else %}negatīva{% endif %}">
+      {{ "%.2f"|format(bilance) }} €
+    </div>
+  </div>
+
+  <!-- Ienākumi / Izdevumi -->
+  <div class="divi-staabi">
+    <div class="info-card i">
+      <div class="info-label">Kopā ienākumi</div>
+      <div class="info-value">+{{ "%.2f"|format(ienakumi) }} €</div>
+    </div>
+    <div class="info-card iz">
+      <div class="info-label">Kopā izdevumi</div>
+      <div class="info-value">−{{ "%.2f"|format(izdevumi) }} €</div>
+    </div>
+  </div>
+
+  <!-- Izdevumu procents no ienākumiem -->
+  {% if ienakumi > 0 %}
+  <div class="progress-section">
+    <div class="progress-title">Izdevumi pret ienākumiem</div>
+    {% set procenti = [[(izdevumi / ienakumi * 100)|round(1), 0]|max, 100]|min %}
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" style="width: {{ procenti }}%"></div>
+    </div>
+    <div class="progress-info">
+      <span>0 €</span>
+      <span>{{ procenti }}% iztērēts</span>
+      <span>{{ "%.2f"|format(ienakumi) }} €</span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Top izdevumi -->
+  <div class="top-section">
+    <div class="top-header">🔺 Lielākie izdevumi</div>
+    {% if izd_saraksts %}
+      {% for ier in izd_saraksts %}
+      <div class="top-row">
+        <span class="top-apraksts">{{ ier.apraksts }}</span>
+        <span class="top-summa">−{{ "%.2f"|format(ier.summa) }} €</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">Nav izdevumu ierakstu.</div>
+    {% endif %}
+  </div>
+
+  <p class="stat-meta">Dati tiek saglabāti failā dati.csv</p>
+</div>
+</body>
+</html>
