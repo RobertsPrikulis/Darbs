@@ -118,3 +118,11 @@ def bilance():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+git init
+git add .
+git commit -m "pirmais commits"
+git branch -M main
+git remote add origin https://github.com/robissw/budzeta-planotajs.git
+git push -u origin main
